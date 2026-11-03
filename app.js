@@ -390,8 +390,25 @@ document.addEventListener("click", async (e) => {
     else if (act === "edit-video") { editVideo = true; renderVideoParts(); }
     else if (act === "cancel-video") { editVideo = false; renderVideoParts(); }
     else if (act === "toggle-desc") { descOpen = !descOpen; renderVideoParts(); }
-  } catch (err) { console.error(err); toast("משהו השתבש. נסו שוב."); }
+  } catch (err) {
+    console.error(err);
+    const msg = authErr(err);
+    const box = $("#menu-err");
+    if (act === "admin" && box) box.textContent = msg; else toast(msg);
+  }
 });
+
+function authErr(err) {
+  const c = err?.code || "";
+  const map = {
+    "auth/unauthorized-domain": "הדומיין של האתר לא מאושר ב־Firebase (Authentication › Settings › Authorized domains).",
+    "auth/operation-not-allowed": "כניסה עם גוגל לא מופעלת ב־Firebase (Authentication › Sign-in method).",
+    "auth/popup-blocked": "הדפדפן חסם את החלון הקופץ. אפשרו חלונות קופצים לאתר ונסו שוב.",
+    "auth/network-request-failed": "בעיית רשת. נסו שוב.",
+    "permission-denied": "אין הרשאה במסד הנתונים. ודאו שכללי האבטחה (Rules) פורסמו.",
+  };
+  return (map[c] || "משהו השתבש. נסו שוב.") + (c ? ` [${c}]` : err?.message ? ` [${String(err.message).slice(0, 80)}]` : "");
+}
 
 document.addEventListener("submit", async (e) => {
   const f = e.target;
@@ -406,7 +423,7 @@ document.addEventListener("submit", async (e) => {
       dlg.close();
       toast(`שלום ${u.name}!`);
       const fn = afterLogin; afterLogin = null; fn?.();
-    } catch (err) { console.error(err); $("#login-err").textContent = "הכניסה נכשלה. בדקו את החיבור ונסו שוב."; }
+    } catch (err) { console.error(err); $("#login-err").textContent = "הכניסה נכשלה. " + authErr(err); }
     return;
   }
   if (!["f-hl", "f-cmt", "f-tag", "f-edit", "f-video"].includes(f.id)) return;
@@ -446,7 +463,7 @@ document.addEventListener("submit", async (e) => {
       await store.update("videoEdits", v.id, { title: f.title.value.trim(), desc: f.desc.value.trim(), year: year >= 1900 && year < 2100 ? year : null });
       editVideo = false; renderVideoParts(); toast("נשמר");
     }
-  } catch (err) { console.error(err); toast("השמירה נכשלה. נסו שוב."); }
+  } catch (err) { console.error(err); toast("השמירה נכשלה. " + authErr(err)); }
 });
 
 // Enter שולח תגובה, Shift+Enter שורה חדשה; הגדלת תיבת התגובה
@@ -469,7 +486,7 @@ store.onChange(() => {
 });
 
 (async function main() {
-  try { await store.init(); } catch (e) { console.error(e); toast("אין חיבור למסד הנתונים. אפשר לצפות, אבל לא לשמור."); }
+  try { await store.init(); } catch (e) { console.error(e); toast("אין חיבור למסד הנתונים. " + authErr(e)); }
   videos = await loadVideos();
   route = { name: "none" };
   onRoute();

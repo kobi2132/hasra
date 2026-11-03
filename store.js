@@ -155,10 +155,14 @@ class FirebaseStore extends BaseStore {
     const { A, F } = this;
     const provider = new A.GoogleAuthProvider();
     try {
-      await A.linkWithPopup(this.auth.currentUser, provider);
+      if (this.auth.currentUser?.isAnonymous) await A.linkWithPopup(this.auth.currentUser, provider);
+      else if (!this.auth.currentUser?.email) await A.signInWithPopup(this.auth, provider);
     } catch (e) {
-      if (e.code === "auth/credential-already-in-use" || e.code === "auth/provider-already-linked") {
-        await A.signInWithPopup(this.auth, provider);
+      if (e.code === "auth/credential-already-in-use") {
+        // חשבון הגוגל כבר מחובר ממכשיר אחר: נכנסים איתו בלי חלון נוסף
+        const cred = A.GoogleAuthProvider.credentialFromError(e);
+        if (cred) await A.signInWithCredential(this.auth, cred);
+        else await A.signInWithPopup(this.auth, provider);
       } else if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") {
         return { ok: false, reason: "cancelled" };
       } else throw e;
