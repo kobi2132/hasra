@@ -1,0 +1,17 @@
+{
+  "name": "חסרה על הימין",
+  "short_name": "חסרה על הימין",
+  "description": "הקלטות הווידאו המשפחתיות משנות ה־90",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0A0D12",
+  "theme_color": "#0A0D12",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

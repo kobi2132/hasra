@@ -1,0 +1,84 @@
+rules_version = '2';
+// חסרה על הימין: כללי גישה ל-Firestore.
+// צפייה פתוחה לכולם. כתיבה דורשת כניסה (אנונימית במכשיר + שם וטלפון).
+// כל אחד עורך ומוחק רק את מה שהוא כתב; המנהל (חשבון גוגל ברשימת admins) יכול הכול.
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function email() { return request.auth.token.email; }
+    function isAdmin() {
+      return signedIn() && email() != null && exists(/databases/$(db)/documents/admins/$(email()));
+    }
+    function ownsUser(key) {
+      return signedIn() && exists(/databases/$(db)/documents/users/$(key))
+        && request.auth.uid in get(/databases/$(db)/documents/users/$(key)).data.uids;
+    }
+    function str(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function validNew(fields) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(fields.concat(['videoId', 'author', 'authorName', 'createdAt']))
+        && str(d.videoId, 40) && ownsUser(d.author) && str(d.authorName, 40)
+        && d.createdAt == request.time;
+    }
+    function canChange() { return ownsUser(resource.data.author) || isAdmin(); }
+    function onlyChanged(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    match /users/{key} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['name', 'uids', 'createdAt'])
+        && str(request.resource.data.name, 40) && request.resource.data.uids == [request.auth.uid];
+      // אין קוד SMS: מי שמכיר את המספר יכול לחבר מכשיר (החלטה מכוונת). שמים גבול לגודל הרשימה.
+      allow update: if signedIn() && onlyChanged(['uids'])
+        && request.resource.data.uids.hasAll(resource.data.uids)
+        && request.auth.uid in request.resource.data.uids
+        && request.resource.data.uids.size() <= resource.data.uids.size() + 1
+        && request.resource.data.uids.size() <= 30;
+      allow delete: if isAdmin();
+    }
+
+    match /highlights/{id} {
+      allow read: if true;
+      allow create: if validNew(['t', 'text']) && request.resource.data.t is int
+        && request.resource.data.t >= 0 && request.resource.data.t < 86400
+        && str(request.resource.data.text, 200);
+      allow update: if canChange() && onlyChanged(['t', 'text', 'edited'])
+        && request.resource.data.t is int && str(request.resource.data.text, 200);
+      allow delete: if canChange();
+    }
+
+    match /comments/{id} {
+      allow read: if true;
+      allow create: if validNew(['text']) && str(request.resource.data.text, 2000);
+      allow update: if canChange() && onlyChanged(['text', 'edited']) && str(request.resource.data.text, 2000);
+      allow delete: if canChange();
+    }
+
+    match /tags/{id} {
+      allow read: if true;
+      allow create: if validNew(['name']) && str(request.resource.data.name, 40);
+      allow delete: if canChange();
+    }
+
+    // שם, תיאור ושנה שהמנהל ערך (מעל מה שמגיע מיוטיוב)
+    match /videoEdits/{videoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // המנהל הראשון: מי שנכנס ראשון עם גוגל דרך "כניסת מנהל" נרשם כמנהל, ואז הדלת ננעלת.
+    // מנהלים נוספים מוסיפים ידנית בקונסולה (admins/<email>).
+    match /admins/{e} {
+      allow read: if signedIn() && email() == e;
+      allow create: if signedIn() && email() == e && request.auth.token.email_verified == true
+        && !exists(/databases/$(db)/documents/config/adminLock)
+        && existsAfter(/databases/$(db)/documents/config/adminLock);
+    }
+    match /config/adminLock {
+      allow read: if true;
+      allow create: if signedIn() && email() != null
+        && existsAfter(/databases/$(db)/documents/admins/$(email()));
+    }
+  }
+}

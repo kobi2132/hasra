@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>חסרה על הימין</title>
+<meta name="description" content="הקלטות הווידאו המשפחתיות של משפחת ימין משנות ה־90">
+<meta name="theme-color" content="#0A0D12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="חסרה על הימין">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Secular+One&family=VT323&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app"><div class="boot"><span class="rec"></span> טוען…</div></div>
+
+<dialog id="dlg" class="dlg"></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // YouTube IFrame API
+  window.ytReady = new Promise((res) => { window.onYouTubeIframeAPIReady = () => res(window.YT); });
+</script>
+<script src="https://www.youtube.com/iframe_api" async></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
