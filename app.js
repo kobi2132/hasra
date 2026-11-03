@@ -347,25 +347,15 @@ function openMenu() {
 function openTv() {
   const v = curVideo(); if (!v) return;
   const t = Math.floor(curTime());
-  player?.pauseVideo?.();
   const url = `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}${t ? "&t=" + t + "s" : ""}`;
-  const ua = navigator.userAgent;
-  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const android = /Android/.test(ua);
-  const tip = ios
-    ? "באפליקציית יוטיוב לוחצים על סמל השידור בפינה העליונה של הסרטון ובוחרים את הטלוויזיה. עם Apple TV אפשר גם לבחור AirPlay."
-    : android
-    ? "באפליקציית יוטיוב לוחצים על סמל השידור בפינה העליונה של הסרטון ובוחרים את הטלוויזיה."
-    : "ביוטיוב לוחצים על סמל השידור בנגן. אפשר גם מתפריט Chrome (⋮) ← העברה (Cast) ← לבחור את הטלוויזיה.";
   dlg.innerHTML = `<form method="dialog">
     <h2>📺 צפייה בטלוויזיה</h2>
-    <p class="lead">הסרטון ייפתח ביוטיוב${t ? " מ־" + fmt(t) : ""}. ${tip}</p>
-    <p class="small">הטלפון והטלוויזיה צריכים להיות מחוברים לאותה רשת Wi‑Fi.</p>
+    <p class="lead">בנגן יש סמל שידור (מסך עם גלים) בפינה העליונה. לוחצים עליו ובוחרים את הטלוויזיה.</p>
+    <p class="small" style="text-align:start">הסמל מופיע רק כש:<br>• פותחים את האתר בדפדפן Chrome (לא מתוך וואטסאפ או פייסבוק)<br>• הטלפון והטלוויזיה באותה רשת Wi‑Fi<br>• בטלוויזיה יש Chromecast או Google TV</p>
     <div class="acts" style="flex-direction:column">
-      <a class="btn primary" style="justify-content:center;padding:11px;text-decoration:none" href="${url}" target="_blank" rel="noopener">פתיחה ביוטיוב</a>
-      <button type="button" class="btn ghost" data-act="close">סגירה</button>
+      <button type="button" class="btn primary" data-act="close" style="justify-content:center;padding:11px">הבנתי</button>
+      <a class="btn ghost" style="justify-content:center;text-decoration:none" href="${url}" target="_blank" rel="noopener">או: פתיחה ביוטיוב מהרגע הזה</a>
     </div>
-    <p class="small">טלוויזיה חכמה עם דפדפן? אפשר גם פשוט לפתוח בה את כתובת האתר.</p>
   </form>`;
   dlg.showModal();
 }
