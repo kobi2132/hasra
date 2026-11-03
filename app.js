@@ -226,7 +226,7 @@ function infoHtml(v) {
   const long = v.desc.length > 220 || v.desc.split("\n").length > 4;
   return `<h2>${esc(v.title)}</h2>
     <div class="meta" style="margin-top:6px">${v.year ? `<span>${v.year}</span>` : ""}${v.secs ? `<span>${fmt(v.secs)}</span>` : ""}
-      ${v.demo ? "" : `<a href="https://www.youtube.com/watch?v=${esc(v.id)}" target="_blank" rel="noopener">פתיחה ביוטיוב</a>`}
+      ${v.demo ? "" : `<button class="btn" data-act="tv" style="padding:4px 10px;font-size:13px">📺 לטלוויזיה</button>`}
       ${store.isAdmin ? `<button class="linkbtn" data-act="edit-video">✎ עריכת שם ותיאור</button>` : ""}</div>
     ${v.desc ? `<p class="desc ${long && !descOpen ? "clamp" : ""}">${richify(v.desc)}</p>${long ? `<button class="linkbtn" data-act="toggle-desc">${descOpen ? "פחות" : "עוד"}</button>` : ""}` : ""}`;
 }
@@ -344,6 +344,31 @@ function openMenu() {
   </form>`;
   dlg.showModal();
 }
+function openTv() {
+  const v = curVideo(); if (!v) return;
+  const t = Math.floor(curTime());
+  player?.pauseVideo?.();
+  const url = `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}${t ? "&t=" + t + "s" : ""}`;
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const android = /Android/.test(ua);
+  const tip = ios
+    ? "באפליקציית יוטיוב לוחצים על סמל השידור בפינה העליונה של הסרטון ובוחרים את הטלוויזיה. עם Apple TV אפשר גם לבחור AirPlay."
+    : android
+    ? "באפליקציית יוטיוב לוחצים על סמל השידור בפינה העליונה של הסרטון ובוחרים את הטלוויזיה."
+    : "ביוטיוב לוחצים על סמל השידור בנגן. אפשר גם מתפריט Chrome (⋮) ← העברה (Cast) ← לבחור את הטלוויזיה.";
+  dlg.innerHTML = `<form method="dialog">
+    <h2>📺 צפייה בטלוויזיה</h2>
+    <p class="lead">הסרטון ייפתח ביוטיוב${t ? " מ־" + fmt(t) : ""}. ${tip}</p>
+    <p class="small">הטלפון והטלוויזיה צריכים להיות מחוברים לאותה רשת Wi‑Fi.</p>
+    <div class="acts" style="flex-direction:column">
+      <a class="btn primary" style="justify-content:center;padding:11px;text-decoration:none" href="${url}" target="_blank" rel="noopener">פתיחה ביוטיוב</a>
+      <button type="button" class="btn ghost" data-act="close">סגירה</button>
+    </div>
+    <p class="small">טלוויזיה חכמה עם דפדפן? אפשר גם פשוט לפתוח בה את כתובת האתר.</p>
+  </form>`;
+  dlg.showModal();
+}
 function requireLogin(fn) { if (store.user) fn(); else openLogin(fn); }
 
 /* ---------- events ---------- */
@@ -389,6 +414,7 @@ document.addEventListener("click", async (e) => {
     }
     else if (act === "edit-video") { editVideo = true; renderVideoParts(); }
     else if (act === "cancel-video") { editVideo = false; renderVideoParts(); }
+    else if (act === "tv") openTv();
     else if (act === "toggle-desc") { descOpen = !descOpen; renderVideoParts(); }
   } catch (err) {
     console.error(err);
